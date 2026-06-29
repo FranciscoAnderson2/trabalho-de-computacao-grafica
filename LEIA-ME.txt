@@ -1,0 +1,24 @@
+Naruto Card Game - Trabalho de CG
+
+pra rodar: python main.py
+(precisa ter pyglfw, PyOpenGL, PyGLM instalados)
+
+É um jogo de cartas pra 2 jogadores no mesmo teclado, tipo hearthstone mas com naruto.
+O objetivo é zerar a vida do outro jogador (começa com 15).
+
+os dois jogadores usam as mesmas teclas, so que alternado (a borda amarela mostra de quem é a vez)
+
+TECLAS:
+C - puxa uma carta do baralho (tem que puxar antes de passar a vez)
+1, 2, 3... - seleciona a carta na mao que quer jogar
+ENTER - coloca a carta no campo (gasta chakra)
+Q / W - seleciona qual carta no campo vai atacar
+A - ataca com a carta selecionada
+ESPAÇO - passa a vez pro outro jogador
+
+a barra verde é vida e a azul é chakra, no canto de cada jogador
+
+se atacar uma carta inimiga e ela morrer com dano sobrando, o resto vai direto na vida do jogador.
+se o campo inimigo tiver vazio, o ataque vai direto na vida.
+
+cada carta so ataca uma vez por turno, e voce ganha +1 de chakra a cada turno.

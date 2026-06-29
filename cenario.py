@@ -1,27 +1,26 @@
 import numpy as np
 import ctypes
+import os
 from OpenGL.GL import *
+from texture import Texture
 import glm
 
-# ------------------------------------------------------------------
-# CenarioQuad: desenha um quadrilateral (chao, parede) com cor solida
-# Sem textura - so geometria basica com VBO/VAO/EBO
-# ------------------------------------------------------------------
 class CenarioQuad:
-    def __init__(self, lista_vertices, cor):
-        # cor é uma tupla (R, G, B, A) de 0.0 a 1.0
-        self.cor = cor
-        self._setup_geometry(lista_vertices)
+    def __init__(self, lista_vertices, caminho_textura, normal=(0.0, 1.0, 0.0)):
+        self.caminho = caminho_textura
 
-    def _setup_geometry(self, lista_vertices):
-        # Prepara os pontos do cenario na placa de video
-        vertices = np.array(lista_vertices, dtype=np.float32).flatten()
-        # Liga os pontos formando dois triangulos (o famoso desenho indexado)
+        dados = []
+        for v in lista_vertices:
+
+            dados.extend([v[0], v[1], v[2], v[3], v[4], normal[0], normal[1], normal[2]])
+
+        vertices = np.array(dados, dtype=np.float32)
+
         indices = np.array([0, 1, 3, 1, 2, 3], dtype=np.uint32)
 
-        self.VAO = glGenVertexArrays(1)  # Cria VAO
-        self.VBO = glGenBuffers(1)       # Cria VBO para os vertices
-        self.EBO = glGenBuffers(1)       # Cria EBO para os indices
+        self.VAO = glGenVertexArrays(1)
+        self.VBO = glGenBuffers(1)
+        self.EBO = glGenBuffers(1)
 
         glBindVertexArray(self.VAO)
 
@@ -31,23 +30,42 @@ class CenarioQuad:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.EBO)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.nbytes, indices, GL_STATIC_DRAW)
 
-        # Cada vertice tem so 3 numeros (X, Y, Z) - sem UV
-        stride = 3 * vertices.itemsize
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(0))
+        tamanho = 8 * 4
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, tamanho, ctypes.c_void_p(0))
         glEnableVertexAttribArray(0)
+
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, tamanho, ctypes.c_void_p(3 * 4))
+        glEnableVertexAttribArray(1)
+
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, tamanho, ctypes.c_void_p(5 * 4))
+        glEnableVertexAttribArray(2)
 
         glBindVertexArray(0)
 
-    def draw(self, shader_id):
-        loc_modelo = glGetUniformLocation(shader_id, "modelo")
-        loc_cor    = glGetUniformLocation(shader_id, "cor")
+        if os.path.exists(self.caminho):
+            self.textura = Texture(self.caminho)
+        else:
+            print("Erro ao achar textura:", self.caminho)
+            self.textura = None
 
-        matriz_identidade = glm.mat4(1.0)
-        glUniformMatrix4fv(loc_modelo, 1, GL_FALSE, glm.value_ptr(matriz_identidade))
+    def draw(self, id_shader):
+        if self.textura:
+            self.textura.bind()
+        local_modelo = glGetUniformLocation(id_shader, "modelo")
 
-        # Manda a cor para o shader
-        glUniform4f(loc_cor, self.cor[0], self.cor[1], self.cor[2], self.cor[3])
+        matriz = glm.mat4(1.0)
+        glUniformMatrix4fv(local_modelo, 1, GL_FALSE, glm.value_ptr(matriz))
+        glBindVertexArray(self.VAO)
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None)
+        glBindVertexArray(0)
 
+    def draw_em(self, id_shader, matriz_modelo):
+
+        if self.textura:
+            self.textura.bind()
+        local_modelo = glGetUniformLocation(id_shader, "modelo")
+        glUniformMatrix4fv(local_modelo, 1, GL_FALSE, glm.value_ptr(matriz_modelo))
         glBindVertexArray(self.VAO)
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None)
         glBindVertexArray(0)
